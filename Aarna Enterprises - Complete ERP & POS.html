@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aarna Enterprises - Business Manager</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Signature Pad Library -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbe1',
+                            100: '#fff3b8',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                            700: '#a16207',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.5); border-radius: 4px; }
+
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            background-color: #0f172a;
+            position: relative;
+        }
+
+        @media (min-width: 1024px) {
+            .app-container {
+                max-width: 1100px;
+                min-height: 94vh;
+                margin: 3vh auto;
+                border-radius: 24px;
+                overflow: hidden;
+                border: 1px solid rgba(255,255,255,0.1);
+            }
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-invoice, #printable-invoice * { visibility: visible; }
+            #printable-invoice {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+                padding: 24px;
+            }
+            .no-print { display: none !important; }
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-slate-950 font-sans antialiased text-slate-100 min-h-full flex flex-col justify-center">
+
+    <!-- App Container -->
+    <div class="app-container">
+        
+        <!-- Native Style Header Toolbar -->
+        <header class="bg-gradient-to-r from-amber-700 via-amber-600 to-emerald-700 px-4 py-3 shadow-lg flex items-center justify-between sticky top-0 z-30">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-900/50 flex items-center justify-center border border-amber-300/30 shadow-inner">
+                    <i class="fa-solid fa-wheat-awn text-amber-300 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-wide text-white leading-tight">Aarna Enterprises</h1>
+                    <p class="text-[10px] text-amber-100/90 font-mono">GST: 23IRKPD1584H1ZQ | 📱 7988452368</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Offline ERP
+                </span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="app-content" class="flex-1 overflow-y-auto pb-20 p-3 sm:p-4 space-y-4">
+            
+            <!-- 1. DASHBOARD VIEW -->
+            <div id="view-dashboard" class="tab-content active space-y-4">
+                <!-- KPI Summary Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3.5 shadow">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Purchase Value</p>
+                        <h2 id="kpi-purchases" class="text-lg font-black text-amber-400 mt-1">₹0</h2>
+                        <span class="text-[9px] text-slate-400">Stock Inflow Cost</span>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3.5 shadow">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Sales Value</p>
+                        <h2 id="kpi-sales" class="text-lg font-black text-emerald-400 mt-1">₹0</h2>
+                        <span class="text-[9px] text-slate-400">Bills & Bookings</span>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3.5 shadow">
+                        <p class="text-[11px] text-slate-400 font-medium">Payment Received</p>
+                        <h2 id="kpi-received" class="text-lg font-black text-blue-400 mt-1">₹0</h2>
+                        <span class="text-[9px] text-slate-400">Cleared Cash / Online</span>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3.5 shadow">
+                        <p class="text-[11px] text-slate-400 font-medium">Pending to Receive</p>
+                        <h2 id="kpi-pending" class="text-lg font-black text-rose-400 mt-1">₹0</h2>
+                        <span class="text-[9px] text-slate-400">Outstanding Credit</span>
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons -->
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="openBillModal('1st')" class="p-2.5 bg-amber-500/20 border border-amber-500/40 rounded-xl flex flex-col items-center hover:bg-amber-500/30">
+                        <i class="fa-solid fa-file-signature text-amber-400 text-base mb-1"></i>
+                        <span class="text-[10px] font-bold text-amber-200">1st Bill</span>
+                    </button>
+                    <button onclick="openBillModal('2nd')" class="p-2.5 bg-emerald-500/20 border border-emerald-500/40 rounded-xl flex flex-col items-center hover:bg-emerald-500/30">
+                        <i class="fa-solid fa-receipt text-emerald-400 text-base mb-1"></i>
+                        <span class="text-[10px] font-bold text-emerald-200">2nd GST Bill</span>
+                    </button>
+                    <button onclick="openPurchaseModal()" class="p-2.5 bg-blue-500/20 border border-blue-500/40 rounded-xl flex flex-col items-center hover:bg-blue-500/30">
+                        <i class="fa-solid fa-truck-ramp-box text-blue-400 text-base mb-1"></i>
+                        <span class="text-[10px] font-bold text-blue-200">+ Purchase</span>
+                    </button>
+                    <button onclick="openPaymentModal()" class="p-2.5 bg-purple-500/20 border border-purple-500/40 rounded-xl flex flex-col items-center hover:bg-purple-500/30">
+                        <i class="fa-solid fa-hand-holding-dollar text-purple-400 text-base mb-1"></i>
+                        <span class="text-[10px] font-bold text-purple-200">+ Payment</span>
+                    </button>
+                </div>
+
+                <!-- Inventory Stock Matrix -->
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 shadow">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-boxes-stacked"></i> Live Stock Inventory (All Quantities In KG)
+                        </h3>
+                        <button onclick="openPurchaseModal()" class="text-[10px] text-emerald-400 hover:underline font-semibold">+ Add Purchase</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900/80 text-slate-400 text-[10px] uppercase border-b border-slate-700">
+                                <tr>
+                                    <th class="p-2">Item Name</th>
+                                    <th class="p-2 text-center">Purchased (KG)</th>
+                                    <th class="p-2 text-center">Sold (KG)</th>
+                                    <th class="p-2 text-right">Available (KG)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-stock-table" class="divide-y divide-slate-800">
+                                <!-- Dynamic Stock Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. SALES DETAILS VIEW -->
+            <div id="view-sales" class="tab-content space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider">Sales & Bills Register</h2>
+                    <div class="flex gap-1.5">
+                        <button onclick="openBillModal('1st')" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold">+ 1st Bill</button>
+                        <button onclick="openBillModal('2nd')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold">+ 2nd GST Bill</button>
+                    </div>
+                </div>
+
+                <!-- Search & Filters -->
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <input type="text" id="filter-sales-search" oninput="renderSales()" placeholder="Customer/Invoice..." class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <select id="filter-sales-item" onchange="renderSales()" class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                        <option value="">All Items</option>
+                    </select>
+                    <input type="date" id="filter-sales-date" onchange="renderSales()" class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                    <button onclick="resetSalesFilters()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl px-2 py-1.5 text-xs font-bold">Reset Filters</button>
+                </div>
+
+                <!-- Summary Bar -->
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 flex justify-between items-center text-xs">
+                    <span id="sales-filter-count" class="text-slate-400">Showing 0 Bills</span>
+                    <span class="font-bold text-amber-300">Filtered Total: <strong id="sales-filter-sum" class="text-emerald-400">₹0</strong></span>
+                </div>
+
+                <!-- Sales List -->
+                <div id="sales-list" class="space-y-2"></div>
+            </div>
+
+            <!-- 3. PURCHASES VIEW -->
+            <div id="view-purchases" class="tab-content space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider">Stock Purchase Entries</h2>
+                    <button onclick="openPurchaseModal()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold">+ New Purchase</button>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <input type="text" id="filter-purchase-search" oninput="renderPurchases()" placeholder="Supplier/Invoice..." class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                    <select id="filter-purchase-item" onchange="renderPurchases()" class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                        <option value="">All Items</option>
+                    </select>
+                    <button onclick="resetPurchaseFilters()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl px-2 py-1.5 text-xs font-bold col-span-2 sm:col-span-1">Clear Filter</button>
+                </div>
+
+                <!-- Summary Bar -->
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-2.5 flex justify-between items-center text-xs">
+                    <span id="purchase-filter-count" class="text-slate-400">Showing 0 Purchases</span>
+                    <span class="font-bold text-blue-300">Total Outflow: <strong id="purchase-filter-sum" class="text-amber-400">₹0</strong></span>
+                </div>
+
+                <!-- Purchases List -->
+                <div id="purchases-list" class="space-y-2"></div>
+            </div>
+
+            <!-- 4. CUSTOMER PAYMENTS VIEW -->
+            <div id="view-payments" class="tab-content space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider">Customer Payment Receipts</h2>
+                    <button onclick="openPaymentModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold">+ Record Payment</button>
+                </div>
+
+                <!-- Payment History List -->
+                <div id="payments-list" class="space-y-2"></div>
+            </div>
+
+            <!-- 5. CUSTOMERS LEDGER VIEW -->
+            <div id="view-customers" class="tab-content space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider">Customer Ledger (Khata)</h2>
+                    <button onclick="openCustomerModal()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold">+ Add Customer</button>
+                </div>
+
+                <!-- Customer List -->
+                <div id="customers-list" class="space-y-2"></div>
+            </div>
+
+            <!-- 6. MORE & BACKUP VIEW -->
+            <div id="view-settings" class="tab-content space-y-4">
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 space-y-3">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider"><i class="fa-solid fa-floppy-disk"></i> Data Backup & Restore</h3>
+                    <p class="text-xs text-slate-400">Save a copy of all sales, purchases, payments, and stock records to your phone storage.</p>
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="exportJSONData()" class="py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold"><i class="fa-solid fa-download"></i> Download Backup</button>
+                        <label class="py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold text-center cursor-pointer">
+                            <i class="fa-solid fa-upload"></i> Restore JSON
+                            <input type="file" id="import-json-file" onchange="importJSONData(event)" accept=".json" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 space-y-2">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider"><i class="fa-solid fa-building"></i> Company Information</h3>
+                    <div class="text-xs text-slate-400 space-y-1">
+                        <p><strong>Firm Name:</strong> Aarna Enterprises</p>
+                        <p><strong>GSTIN:</strong> 23IRKPD1584H1ZQ</p>
+                        <p><strong>Mobile:</strong> 7988452368</p>
+                        <p><strong>Business Type:</strong> Spices & FMCG Wholesale</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Android Bottom Navigation Bar -->
+        <nav class="fixed bottom-0 left-0 right-0 max-w-[1100px] mx-auto bg-slate-900/95 backdrop-blur-md border-t border-slate-800 py-2 px-2 z-30">
+            <div class="grid grid-cols-5 gap-1 text-center">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex flex-col items-center py-1 text-amber-400">
+                    <i class="fa-solid fa-chart-pie text-base mb-0.5"></i>
+                    <span class="text-[9px] font-medium">Dashboard</span>
+                </button>
+                <button onclick="switchTab('sales')" id="nav-sales" class="nav-btn flex flex-col items-center py-1 text-slate-400">
+                    <i class="fa-solid fa-receipt text-base mb-0.5"></i>
+                    <span class="text-[9px] font-medium">Sales</span>
+                </button>
+                <button onclick="switchTab('purchases')" id="nav-purchases" class="nav-btn flex flex-col items-center py-1 text-slate-400">
+                    <i class="fa-solid fa-truck-ramp-box text-base mb-0.5"></i>
+                    <span class="text-[9px] font-medium">Purchases</span>
+                </button>
+                <button onclick="switchTab('payments')" id="nav-payments" class="nav-btn flex flex-col items-center py-1 text-slate-400">
+                    <i class="fa-solid fa-hand-holding-dollar text-base mb-0.5"></i>
+                    <span class="text-[9px] font-medium">Payments</span>
+                </button>
+                <button onclick="switchTab('customers')" id="nav-customers" class="nav-btn flex flex-col items-center py-1 text-slate-400">
+                    <i class="fa-solid fa-users text-base mb-0.5"></i>
+                    <span class="text-[9px] font-medium">Customers</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- General Dynamic Form Modal -->
+    <div id="app-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-4 sm:p-5 shadow-2xl relative text-slate-100">
+            <button onclick="closeAppModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white p-2">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Printable Invoice & Signature Overlay -->
+    <div id="invoice-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-4 shadow-2xl relative text-slate-100 my-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-800 no-print">
+                <h3 id="invoice-modal-title" class="font-bold text-amber-400 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-file-invoice"></i> Invoice Preview
+                </h3>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="shareWhatsApp()" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                    </button>
+                    <button onclick="window.print()" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-print"></i> PDF/Print
+                    </button>
+                    <button onclick="closeInvoiceModal()" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Body -->
+            <div id="printable-invoice" class="mt-3 bg-white text-slate-900 p-4 rounded-xl font-sans text-xs shadow-inner">
+                <!-- Dynamic Invoice HTML Injected Here -->
+            </div>
+
+            <!-- Signature Capture Section (Digital Pad inside modal) -->
+            <div class="mt-4 pt-3 border-t border-slate-800 no-print space-y-2">
+                <h4 class="text-xs font-bold text-amber-400">Capture Digital Signatures</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <p class="text-[10px] text-slate-400 mb-1">Aarna Enterprises Sign</p>
+                        <canvas id="sign-pad-owner" class="w-full h-20 bg-slate-800 rounded-lg border border-slate-700 touch-none"></canvas>
+                        <button onclick="clearSign('owner')" class="text-[9px] text-rose-400 underline mt-1">Clear Sign</button>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 mb-1">Customer Sign</p>
+                        <canvas id="sign-pad-cust" class="w-full h-20 bg-slate-800 rounded-lg border border-slate-700 touch-none"></canvas>
+                        <button onclick="clearSign('cust')" class="text-[9px] text-rose-400 underline mt-1">Clear Sign</button>
+                    </div>
+                </div>
+                <button onclick="applySignaturesToInvoice()" class="w-full py-2 bg-amber-500 text-slate-900 font-bold rounded-xl text-xs">Apply Signatures to Bill</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toasts -->
+    <div id="toast-box" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center space-y-2"></div>
+
+    <script>
+        const DEFAULT_PURCHASES = [
+            { id: 'P-101', date: '2026-10-15', supplier: 'Rajesh Spices Wholesale', invoiceNo: 'SUP-882', item: 'Turmeric Powder (Haldi)', qtyKG: 500, ratePerKG: 120, igstPercent: 5, total: 63000 },
+            { id: 'P-102', date: '2026-10-18', supplier: 'Mandi Traders Gwalior', invoiceNo: 'SUP-889', item: 'Red Chilli Powder (Lal Mirch)', qtyKG: 300, ratePerKG: 190, igstPercent: 5, total: 59850 },
+            { id: 'P-103', date: '2026-10-20', supplier: 'Gujarat Grain Corp', invoiceNo: 'SUP-901', item: 'Cumin Seeds (Jeera)', qtyKG: 200, ratePerKG: 250, igstPercent: 5, total: 52500 }
+        ];
+
+        const DEFAULT_CUSTOMERS = [
+            { id: 'C-1', name: 'Gupta Kirana Store', address: 'Main Market, Gwalior', phone: '9826123456' },
+            { id: 'C-2', name: 'Sharma General Traders', address: 'Station Road, Morena', phone: '9425112233' },
+            { id: 'C-3', name: 'Verma Supermarket', address: 'City Centre, Gwalior', phone: '9988776655' }
+        ];
+
+        const DEFAULT_SALES = [
+            {
+                id: 'INV-1001',
+                billType: '1st',
+                date: '2026-10-22',
+                customerName: 'Gupta Kirana Store',
+                customerAddress: 'Main Market, Gwalior',
+                invoiceNo: 'INV-1001',
+                item: 'Turmeric Powder (Haldi)',
+                qtyKG: 100,
+                ratePerKG: 150,
+                igstPercent: 0,
+                total: 15000,
+                amountReceived: 0
+            },
+            {
+                id: 'INV-1002',
+                billType: '2nd',
+                date: '2026-10-25',
+                customerName: 'Sharma General Traders',
+                customerAddress: 'Station Road, Morena',
+                invoiceNo: 'INV-1002',
+                item: 'Red Chilli Powder (Lal Mirch)',
+                qtyKG: 50,
+                ratePerKG: 230,
+                igstPercent: 5,
+                total: 12075,
+                amountReceived: 12075
+            }
+        ];
+
+        const DEFAULT_PAYMENTS = [
+            { id: 'PAY-1', date: '2026-10-25', customerName: 'Sharma General Traders', invoiceNo: 'INV-1002', mode: 'UPI', amountPaid: 12075 }
+        ];
+
+        let purchases = JSON.parse(localStorage.getItem('aarna_purchases')) || DEFAULT_PURCHASES;
+        let customers = JSON.parse(localStorage.getItem('aarna_customers')) || DEFAULT_CUSTOMERS;
+        let sales = JSON.parse(localStorage.getItem('aarna_sales')) || DEFAULT_SALES;
+        let payments = JSON.parse(localStorage.getItem('aarna_payments')) || DEFAULT_PAYMENTS;
+
+        let activeTab = 'dashboard';
+        let currentInvoiceForView = null;
+        let sigPadOwner = null;
+        let sigPadCust = null;
+
+        function saveAll() {
+            localStorage.setItem('aarna_purchases', JSON.stringify(purchases));
+            localStorage.setItem('aarna_customers', JSON.stringify(customers));
+            localStorage.setItem('aarna_sales', JSON.stringify(sales));
+            localStorage.setItem('aarna_payments', JSON.stringify(payments));
+            recalculateAllData();
+        }
+
+        function showToast(msg, type = 'success') {
+            const toastBox = document.getElementById('toast-box');
+            const toast = document.createElement('div');
+            const color = type === 'success' ? 'bg-emerald-600' : 'bg-amber-600';
+            toast.className = `${color} text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl flex items-center gap-2 transform transition-all duration-300 opacity-0 translate-y-2`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+            toastBox.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        function getStockMatrix() {
+            const matrix = {};
+            purchases.forEach(p => {
+                if (!matrix[p.item]) matrix[p.item] = { name: p.item, purchased: 0, sold: 0 };
+                matrix[p.item].purchased += (parseFloat(p.qtyKG) || 0);
+            });
+            sales.forEach(s => {
+                if (!matrix[s.item]) matrix[s.item] = { name: s.item, purchased: 0, sold: 0 };
+                matrix[s.item].sold += (parseFloat(s.qtyKG) || 0);
+            });
+            return matrix;
+        }
+
+        function getCustomerPendingBalance(customerName) {
+            const totalBilled = sales
+                .filter(s => s.customerName === customerName)
+                .reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+
+            const totalPaid = payments
+                .filter(p => p.customerName === customerName)
+                .reduce((sum, p) => sum + (parseFloat(p.amountPaid) || 0), 0);
+
+            return Math.max(0, totalBilled - totalPaid);
+        }
+
+        function recalculateAllData() {
+            const totalPurchaseVal = purchases.reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0);
+            const totalSalesVal = sales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+            const totalReceivedVal = payments.reduce((sum, p) => sum + (parseFloat(p.amountPaid) || 0), 0);
+            const totalPendingVal = Math.max(0, totalSalesVal - totalReceivedVal);
+
+            document.getElementById('kpi-purchases').innerText = `₹${totalPurchaseVal.toLocaleString('en-IN')}`;
+            document.getElementById('kpi-sales').innerText = `₹${totalSalesVal.toLocaleString('en-IN')}`;
+            document.getElementById('kpi-received').innerText = `₹${totalReceivedVal.toLocaleString('en-IN')}`;
+            document.getElementById('kpi-pending').innerText = `₹${totalPendingVal.toLocaleString('en-IN')}`;
+
+            const matrix = getStockMatrix();
+            const stockTbody = document.getElementById('dashboard-stock-table');
+            stockTbody.innerHTML = '';
+
+            const itemsList = Object.keys(matrix);
+            if (itemsList.length === 0) {
+                stockTbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-500 text-xs">No stock available. Add a purchase first!</td></tr>`;
+            } else {
+                itemsList.forEach(itemName => {
+                    const data = matrix[itemName];
+                    const available = data.purchased - data.sold;
+                    const isLow = available <= 20;
+
+                    stockTbody.innerHTML += `
+                        <tr class="hover:bg-slate-900/40">
+                            <td class="p-2 font-bold text-slate-200">${itemName}</td>
+                            <td class="p-2 text-center text-slate-400">${data.purchased} KG</td>
+                            <td class="p-2 text-center text-slate-400">${data.sold} KG</td>
+                            <td class="p-2 text-right font-bold ${isLow ? 'text-rose-400' : 'text-emerald-400'}">
+                                ${available} KG ${isLow ? '<i class="fa-solid fa-triangle-exclamation text-[10px] ml-1"></i>' : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            populateItemDropdowns();
+        }
+
+        function populateItemDropdowns() {
+            const matrix = getStockMatrix();
+            const items = Object.keys(matrix);
+
+            ['filter-sales-item', 'filter-purchase-item'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const current = el.value;
+                    el.innerHTML = '<option value="">All Items</option>' + items.map(i => `<option value="${i}">${i}</option>`).join('');
+                    el.value = current;
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('text-amber-400');
+                b.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`view-${tab}`).classList.add('active');
+            const navBtn = document.getElementById(`nav-${tab}`);
+            if (navBtn) {
+                navBtn.classList.remove('text-slate-400');
+                navBtn.classList.add('text-amber-400');
+            }
+
+            if (tab === 'sales') renderSales();
+            else if (tab === 'purchases') renderPurchases();
+            else if (tab === 'payments') renderPayments();
+            else if (tab === 'customers') renderCustomers();
+        }
+
+        function openAppModal(html) {
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('app-modal').classList.remove('hidden');
+        }
+
+        function closeAppModal() {
+            document.getElementById('app-modal').classList.add('hidden');
+        }
+
+        function renderPurchases() {
+            const search = (document.getElementById('filter-purchase-search')?.value || '').toLowerCase();
+            const itemFilter = document.getElementById('filter-purchase-item')?.value || '';
+
+            const filtered = purchases.filter(p => {
+                const matchesSearch = p.supplier.toLowerCase().includes(search) || (p.invoiceNo && p.invoiceNo.toLowerCase().includes(search));
+                const matchesItem = !itemFilter || p.item === itemFilter;
+                return matchesSearch && matchesItem;
+            });
+
+            const sum = filtered.reduce((acc, p) => acc + (parseFloat(p.total) || 0), 0);
+            document.getElementById('purchase-filter-count').innerText = `Showing ${filtered.length} of ${purchases.length} Records`;
+            document.getElementById('purchase-filter-sum').innerText = `₹${sum.toLocaleString('en-IN')}`;
+
+            const container = document.getElementById('purchases-list');
+            if (filtered.length === 0) {
+                container.innerHTML = `<p class="text-center py-6 text-slate-500 text-xs">No purchase entries found.</p>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(p => `
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 flex justify-between items-center text-xs">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-slate-100">${p.supplier}</h4>
+                            <span class="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full">${p.invoiceNo || 'N/A'}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${p.date} • <strong class="text-amber-300">${p.item}</strong> (${p.qtyKG} KG @ ₹${p.ratePerKG}/KG + ${p.igstPercent}% IGST)</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-black text-amber-400 text-sm">₹${p.total.toLocaleString('en-IN')}</span>
+                        <button onclick="openPurchaseModal('${p.id}')" class="p-1.5 text-slate-400 hover:text-amber-400"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deletePurchase('${p.id}')" class="p-1.5 text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openPurchaseModal(id = null) {
+            const p = purchases.find(x => x.id === id) || {
+                id: 'P-' + Date.now(),
+                date: new Date().toISOString().slice(0, 10),
+                supplier: '',
+                invoiceNo: '',
+                item: 'Turmeric Powder (Haldi)',
+                qtyKG: 100,
+                ratePerKG: 120,
+                igstPercent: 5,
+                total: 0
+            };
+
+            openAppModal(`
+                <h3 class="text-sm font-bold text-amber-400 mb-3"><i class="fa-solid fa-truck-ramp-box"></i> ${id ? 'Edit' : 'Add'} Stock Purchase Entry</h3>
+                <form onsubmit="savePurchase(event, '${p.id}')" class="space-y-3 text-xs">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-slate-400 mb-1">Purchase Date</label>
+                            <input type="date" id="p-date" required value="${p.date}" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Supplier Invoice No (Optional)</label>
+                            <input type="text" id="p-inv" value="${p.invoiceNo}" placeholder="e.g. SUP-102" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-white">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Supplier Name</label>
+                        <input type="text" id="p-supplier" required value="${p.supplier}" placeholder="e.g. Mandi Traders Gwalior" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Item / Commodity Name</label>
+                        <input type="text" id="p-item" required value="${p.item}" placeholder="e.g. Coriander Powder (Dhani) " class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-white">
+                    </div>
+                    
