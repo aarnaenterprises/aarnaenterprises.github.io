@@ -4292,115 +4292,128 @@
 
 </script>
 
-<!-- Aarna Enterprises Firebase 2-Device Cloud Sync -->
+<!-- Aarna Enterprises Firebase 2-Device Cloud Sync (Corrected) -->
 <div id="fb-sync-widget" style="position:fixed;bottom:14px;right:14px;z-index:99999;background:#1e293b;color:#fff;padding:10px 14px;border-radius:10px;font-family:sans-serif;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
   <div id="fb-auth-box">
     <div style="font-weight:bold;margin-bottom:6px;">☁️ Cloud Sync Login</div>
-    <input id="fb-email" type="email" placeholder="Email" style="display:block;width:180px;margin-bottom:5px;padding:5px;border-radius:4px;border:none;color:#000;">
-    <input id="fb-pass" type="password" placeholder="Password (min 6 chars)" style="display:block;width:180px;margin-bottom:6px;padding:5px;border-radius:4px;border:none;color:#000;">
-    <button id="fb-login-btn" style="background:#2563eb;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;margin-right:4px;">Login</button>
-    <button id="fb-signup-btn" style="background:#10b981;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Create Account</button>
+    <input id="fb-email" type="email" placeholder="Email" style="display:block;width:190px;margin-bottom:5px;padding:5px;border-radius:4px;border:none;color:#000;">
+    <input id="fb-pass" type="password" placeholder="Password (min 6 chars)" style="display:block;width:190px;margin-bottom:6px;padding:5px;border-radius:4px;border:none;color:#000;">
+    <button id="fb-login-btn" type="button" style="background:#2563eb;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;margin-right:4px;">Login</button>
+    <button id="fb-signup-btn" type="button" style="background:#10b981;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Create Account</button>
     <div id="fb-msg" style="margin-top:5px;color:#fbbf24;max-width:190px;"></div>
   </div>
   <div id="fb-status-box" style="display:none;">
     <span id="fb-sync-text">🟢 Synced</span>
-    <button id="fb-logout-btn" style="margin-left:8px;background:#ef4444;color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Logout</button>
+    <button id="fb-logout-btn" type="button" style="margin-left:8px;background:#ef4444;color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Logout</button>
   </div>
 </div>
 
-<script type="module">
-  import { initializeApp } from "https://gstatic.com";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://gstatic.com";
-  import { getFirestore, doc, setDoc, onSnapshot } from "https://gstatic.com";
+<script src="https://gstatic.com"></script>
+<script src="https://gstatic.com"></script>
+<script src="https://gstatic.com"></script>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBpc3jK9u27HwvmdRI9HbJazcUGJzpoqNQ",
-    authDomain: "://firebaseapp.com",
-    projectId: "aarna-enterprises",
-    storageBucket: "aarna-enterprises.firebasestorage.app",
-    messagingSenderId: "17774311831",
-    appId: "1:17774311831:web:56b925dbdc922246dfacd2"
-  };
+<script>
+  (function() {
+    const firebaseConfig = {
+      apiKey: "AIzaSyBpc3jK9u27HwvmdRI9HbJazcUGJzpoqNQ",
+      authDomain: "aarna-enterprises.firebaseapp.com",
+      projectId: "aarna-enterprises",
+      storageBucket: "aarna-enterprises.firebasestorage.app",
+      messagingSenderId: "17774311831",
+      appId: "1:17774311831:web:56b925dbdc922246dfacd2"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  let isApplyingRemote = false;
-  let lastSyncedHash = "";
-
-  function getAllLocalData() {
-    const data = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k.startsWith("firebase:")) data[k] = localStorage.getItem(k);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
     }
-    return data;
-  }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-  async function pushToCloud(uid) {
-    if (isApplyingRemote) return;
-    const data = getAllLocalData();
-    const hash = JSON.stringify(data);
-    if (hash === lastSyncedHash || Object.keys(data).length === 0) return;
-    lastSyncedHash = hash;
-    document.getElementById("fb-sync-text").textContent = "🔄 Syncing...";
-    await setDoc(doc(db, "users", uid, "erp", "backup"), {
-      payload: hash,
-      updatedAt: Date.now()
-    });
-    document.getElementById("fb-sync-text").textContent = "🟢 Synced";
-  }
+    let isApplyingRemote = false;
+    let lastSyncedHash = "";
 
-  document.getElementById("fb-login-btn").onclick = async () => {
-    const email = document.getElementById("fb-email").value.trim();
-    const pass = document.getElementById("fb-pass").value;
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-    } catch (e) {
-      document.getElementById("fb-msg").textContent = e.message;
+    function getAllLocalData() {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k.startsWith("firebase:")) data[k] = localStorage.getItem(k);
+      }
+      return data;
     }
-  };
 
-  document.getElementById("fb-signup-btn").onclick = async () => {
-    const email = document.getElementById("fb-email").value.trim();
-    const pass = document.getElementById("fb-pass").value;
-    try {
-      await createUserWithEmailAndPassword(auth, email, pass);
-    } catch (e) {
-      document.getElementById("fb-msg").textContent = e.message;
-    }
-  };
-
-  document.getElementById("fb-logout-btn").onclick = () => signOut(auth);
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      document.getElementById("fb-auth-box").style.display = "none";
-      document.getElementById("fb-status-box").style.display = "block";
-
-      onSnapshot(doc(db, "users", user.uid, "erp", "backup"), (snap) => {
-        if (snap.exists()) {
-          const remoteHash = snap.data().payload;
-          if (remoteHash && remoteHash !== lastSyncedHash) {
-            isApplyingRemote = true;
-            lastSyncedHash = remoteHash;
-            const parsed = JSON.parse(remoteHash);
-            Object.keys(parsed).forEach(k => localStorage.setItem(k, parsed[k]));
-            isApplyingRemote = false;
-            location.reload();
-          }
-        } else {
-          pushToCloud(user.uid);
-        }
+    async function pushToCloud(uid) {
+      if (isApplyingRemote) return;
+      const data = getAllLocalData();
+      const hash = JSON.stringify(data);
+      if (hash === lastSyncedHash || Object.keys(data).length === 0) return;
+      lastSyncedHash = hash;
+      document.getElementById("fb-sync-text").textContent = "🔄 Syncing...";
+      await db.collection("users").doc(uid).collection("erp").doc("backup").set({
+        payload: hash,
+        updatedAt: Date.now()
       });
-
-      setInterval(() => pushToCloud(user.uid), 3000);
-    } else {
-      document.getElementById("fb-auth-box").style.display = "block";
-      document.getElementById("fb-status-box").style.display = "none";
+      document.getElementById("fb-sync-text").textContent = "🟢 Synced";
     }
-  });
+
+    document.getElementById("fb-login-btn").onclick = async function() {
+      const email = document.getElementById("fb-email").value.trim();
+      const pass = document.getElementById("fb-pass").value;
+      document.getElementById("fb-msg").textContent = "Logging in...";
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        document.getElementById("fb-msg").textContent = "";
+      } catch (e) {
+        document.getElementById("fb-msg").textContent = e.message;
+      }
+    };
+
+    document.getElementById("fb-signup-btn").onclick = async function() {
+      const email = document.getElementById("fb-email").value.trim();
+      const pass = document.getElementById("fb-pass").value;
+      document.getElementById("fb-msg").textContent = "Creating account...";
+      try {
+        await auth.createUserWithEmailAndPassword(email, pass);
+        document.getElementById("fb-msg").textContent = "";
+      } catch (e) {
+        document.getElementById("fb-msg").textContent = e.message;
+      }
+    };
+
+    document.getElementById("fb-logout-btn").onclick = function() {
+      auth.signOut();
+    };
+
+    auth.onAuthStateChanged(function(user) {
+      if (user) {
+        document.getElementById("fb-auth-box").style.display = "none";
+        document.getElementById("fb-status-box").style.display = "block";
+
+        db.collection("users").doc(user.uid).collection("erp").doc("backup")
+          .onSnapshot(function(snap) {
+            if (snap.exists) {
+              const remoteHash = snap.data().payload;
+              if (remoteHash && remoteHash !== lastSyncedHash) {
+                isApplyingRemote = true;
+                lastSyncedHash = remoteHash;
+                const parsed = JSON.parse(remoteHash);
+                Object.keys(parsed).forEach(function(k) {
+                  localStorage.setItem(k, parsed[k]);
+                });
+                isApplyingRemote = false;
+                location.reload();
+              }
+            } else {
+              pushToCloud(user.uid);
+            }
+          });
+
+        setInterval(function() { pushToCloud(user.uid); }, 3000);
+      } else {
+        document.getElementById("fb-auth-box").style.display = "block";
+        document.getElementById("fb-status-box").style.display = "none";
+      }
+    });
+  })();
 </script>
 
 
