@@ -4292,7 +4292,7 @@
 
 </script>
 
-<!-- Aarna Enterprises: 2-Device Sync + Auto-Named APK PDF Download Fix -->
+<!-- Aarna Enterprises: 2-Device Sync + Native APK Print-to-PDF Fix -->
 <div id="fb-sync-widget" style="position:fixed;bottom:14px;right:14px;z-index:99999;background:#1e293b;color:#fff;padding:10px 14px;border-radius:10px;font-family:sans-serif;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
   <div id="fb-auth-box">
     <div style="font-weight:bold;margin-bottom:6px;">☁️ Cloud Sync Login</div>
@@ -4311,36 +4311,28 @@
 
 <script>
   (function() {
-    // 1. Upgraded APK PDF & File Download Interceptor (Handles jsPDF, html2pdf, and blob links)
-    const origClick = HTMLAnchorElement.prototype.click;
-    HTMLAnchorElement.prototype.click = function() {
-      const href = this.href || "";
-      if (href.startsWith("blob:") || href.startsWith("data:")) {
-        let fname = this.getAttribute("download");
-        if (!fname || fname.trim() === "") {
-          fname = "Aarna_Enterprises_" + new Date().toISOString().slice(0, 10) + ".pdf";
-          this.setAttribute("download", fname);
-        }
-        this.removeAttribute("target");
+    // 1. Detect if running inside Android WebView (APK)
+    const isAPK = /wv|Android.*Version\/[\d.]+/i.test(navigator.userAgent);
 
-        if (href.startsWith("blob:")) {
-          const anchor = this;
-          fetch(href)
-            .then(function(res) { return res.blob(); })
-            .then(function(blob) {
-              const reader = new FileReader();
-              reader.onloadend = function() {
-                anchor.href = reader.result;
-                origClick.call(anchor);
-              };
-              reader.readAsDataURL(blob);
-            })
-            .catch(function() { origClick.call(anchor); });
-          return;
+    if (isAPK) {
+      // Intercept "Save PDF" button clicks inside the APK to use Android's native PDF saver
+      document.addEventListener("click", function(e) {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        const label = (btn.innerText || btn.textContent || "").trim().toLowerCase();
+        if (label.includes("save pdf") || label.includes("save stock pdf")) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Hide floating sync widget during PDF generation
+          const widget = document.getElementById("fb-sync-widget");
+          if (widget) widget.style.display = "none";
+          window.print();
+          setTimeout(function() {
+            if (widget) widget.style.display = "block";
+          }, 1500);
         }
-      }
-      origClick.call(this);
-    };
+      }, true);
+    }
 
     // 2. Link-Safe Firebase Loader
     const host = ["www", "gstatic", "com"].join(".");
@@ -4478,45 +4470,6 @@
     }
 
     loadNext(0);
-  })();
-</script>
-
-<!-- PART 2: APK File Download & PDF Fix -->
-<script>
-  (function() {
-    // 1. Intercept blob: downloads (PDFs, JSON backups, CSVs) so Android WebView APKs can download them
-    document.addEventListener("click", function(e) {
-      const link = e.target.closest("a");
-      if (!link || !link.href) return;
-
-      // Prevent new-tab blocks inside APK WebViews
-      if (link.target === "_blank" && (link.hasAttribute("download") || link.href.startsWith("blob:") || link.href.startsWith("data:"))) {
-        link.removeAttribute("target");
-      }
-
-      // Convert blob: URLs into data: URLs which Android WebView DownloadListeners support natively
-      if (link.href.startsWith("blob:")) {
-        e.preventDefault();
-        const fileName = link.getAttribute("download") || "Aarna_Enterprises_Report.pdf";
-        fetch(link.href)
-          .then(function(res) { return res.blob(); })
-          .then(function(blob) {
-            const reader = new FileReader();
-            reader.onloadend = function() {
-              const tempLink = document.createElement("a");
-              tempLink.href = reader.result;
-              tempLink.download = fileName;
-              document.body.appendChild(tempLink);
-              tempLink.click();
-              document.body.removeChild(tempLink);
-            };
-            reader.readAsDataURL(blob);
-          })
-          .catch(function() {
-            window.location.href = link.href;
-          });
-      }
-    }, true);
   })();
 </script>
 
