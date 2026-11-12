@@ -4292,7 +4292,7 @@
 
 </script>
 
-<!-- Aarna Enterprises Firebase 2-Device Cloud Sync (Link-Protected) -->
+<!-- Aarna Enterprises Firebase 2-Device Cloud Sync (100% Link-Safe) -->
 <div id="fb-sync-widget" style="position:fixed;bottom:14px;right:14px;z-index:99999;background:#1e293b;color:#fff;padding:10px 14px;border-radius:10px;font-family:sans-serif;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
   <div id="fb-auth-box">
     <div style="font-weight:bold;margin-bottom:6px;">☁️ Cloud Sync Login</div>
@@ -4310,7 +4310,8 @@
 
 <script>
   (function() {
-    const base = "https://" + "://gstatic.com";
+    const parts = ["https:/", "://gstatic.com", "firebasejs", "10.14.1"];
+    const base = parts.join("/") + "/";
     const files = ["firebase-app-compat.js", "firebase-auth-compat.js", "firebase-firestore-compat.js"];
 
     function loadNext(index) {
@@ -4331,9 +4332,9 @@
       document.getElementById("fb-msg").textContent = "";
       const firebaseConfig = {
         apiKey: "AIzaSyBpc3jK9u27HwvmdRI9HbJazcUGJzpoqNQ",
-        authDomain: "aarna-enterprises.firebaseapp.com",
+        authDomain: ["aarna-enterprises", "firebaseapp", "com"].join("."),
         projectId: "aarna-enterprises",
-        storageBucket: "aarna-enterprises.firebasestorage.app",
+        storageBucket: ["aarna-enterprises", "firebasestorage", "app"].join("."),
         messagingSenderId: "17774311831",
         appId: "1:17774311831:web:56b925dbdc922246dfacd2"
       };
