@@ -4292,7 +4292,7 @@
 
 </script>
 
-<!-- Aarna Enterprises Firebase 2-Device Cloud Sync (100% Fixed) -->
+<!-- Aarna Enterprises Firebase 2-Device Cloud Sync (No Auto-Refresh Loop) -->
 <div id="fb-sync-widget" style="position:fixed;bottom:14px;right:14px;z-index:99999;background:#1e293b;color:#fff;padding:10px 14px;border-radius:10px;font-family:sans-serif;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
   <div id="fb-auth-box">
     <div style="font-weight:bold;margin-bottom:6px;">☁️ Cloud Sync Login</div>
@@ -4304,6 +4304,7 @@
   </div>
   <div id="fb-status-box" style="display:none;">
     <span id="fb-sync-text">🟢 Synced</span>
+    <button id="fb-apply-btn" type="button" style="display:none;margin-left:8px;background:#f59e0b;color:#000;font-weight:bold;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">🔄 Tap to Refresh</button>
     <button id="fb-logout-btn" type="button" style="margin-left:8px;background:#ef4444;color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Logout</button>
   </div>
 </div>
@@ -4346,26 +4347,33 @@
       const db = firebase.firestore();
 
       let isApplyingRemote = false;
-      let lastSyncedHash = "";
+      let firstLoadDone = false;
 
-      function getAllLocalData() {
-        const data = {};
+      // Sort keys alphabetically so Mobile and PC always produce the exact same hash
+      function getNormalizedHash() {
+        const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (!k.startsWith("firebase:")) data[k] = localStorage.getItem(k);
+          if (k && !k.startsWith("firebase:")) keys.push(k);
         }
-        return data;
+        keys.sort();
+        const sortedData = {};
+        keys.forEach(function(k) {
+          sortedData[k] = localStorage.getItem(k);
+        });
+        return { data: sortedData, hash: JSON.stringify(sortedData), count: keys.length };
       }
+
+      let lastSyncedHash = getNormalizedHash().hash;
 
       async function pushToCloud(uid) {
         if (isApplyingRemote) return;
-        const data = getAllLocalData();
-        const hash = JSON.stringify(data);
-        if (hash === lastSyncedHash || Object.keys(data).length === 0) return;
-        lastSyncedHash = hash;
-        document.getElementById("fb-sync-text").textContent = "🔄 Syncing...";
+        const current = getNormalizedHash();
+        if (current.hash === lastSyncedHash || current.count === 0) return;
+        lastSyncedHash = current.hash;
+        document.getElementById("fb-sync-text").textContent = "🔄 Saving...";
         await db.collection("users").doc(uid).collection("erp").doc("backup").set({
-          payload: hash,
+          payload: current.hash,
           updatedAt: Date.now()
         });
         document.getElementById("fb-sync-text").textContent = "🟢 Synced";
@@ -4399,6 +4407,10 @@
         auth.signOut();
       };
 
+      document.getElementById("fb-apply-btn").onclick = function() {
+        location.reload();
+      };
+
       auth.onAuthStateChanged(function(user) {
         if (user) {
           document.getElementById("fb-auth-box").style.display = "none";
@@ -4408,7 +4420,8 @@
             .onSnapshot(function(snap) {
               if (snap.exists) {
                 const remoteHash = snap.data().payload;
-                if (remoteHash && remoteHash !== lastSyncedHash) {
+                const localHash = getNormalizedHash().hash;
+                if (remoteHash && remoteHash !== localHash && remoteHash !== lastSyncedHash) {
                   isApplyingRemote = true;
                   lastSyncedHash = remoteHash;
                   const parsed = JSON.parse(remoteHash);
@@ -4416,14 +4429,25 @@
                     localStorage.setItem(k, parsed[k]);
                   });
                   isApplyingRemote = false;
-                  location.reload();
+
+                  if (!firstLoadDone) {
+                    firstLoadDone = true;
+                    location.reload(); // Reload only once when first opening the app
+                  } else {
+                    // Save data silently in background without interrupting your typing!
+                    document.getElementById("fb-sync-text").textContent = "🟡 Updated";
+                    document.getElementById("fb-apply-btn").style.display = "inline-block";
+                  }
                 }
+                firstLoadDone = true;
               } else {
+                firstLoadDone = true;
                 pushToCloud(user.uid);
               }
             });
 
-          setInterval(function() { pushToCloud(user.uid); }, 3000);
+          // Check every 5 seconds instead of 3 to keep mobile smooth
+          setInterval(function() { pushToCloud(user.uid); }, 5000);
         } else {
           document.getElementById("fb-auth-box").style.display = "block";
           document.getElementById("fb-status-box").style.display = "none";
