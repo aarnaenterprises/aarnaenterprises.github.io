@@ -4292,7 +4292,7 @@
 
 </script>
 
-<!-- Aarna Enterprises Firebase 2-Device Cloud Sync (No Auto-Refresh Loop) -->
+<!-- Aarna Enterprises: Final 2-Device Sync (Zero Auto-Refresh) + APK Download Fix -->
 <div id="fb-sync-widget" style="position:fixed;bottom:14px;right:14px;z-index:99999;background:#1e293b;color:#fff;padding:10px 14px;border-radius:10px;font-family:sans-serif;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
   <div id="fb-auth-box">
     <div style="font-weight:bold;margin-bottom:6px;">☁️ Cloud Sync Login</div>
@@ -4304,13 +4304,42 @@
   </div>
   <div id="fb-status-box" style="display:none;">
     <span id="fb-sync-text">🟢 Synced</span>
-    <button id="fb-apply-btn" type="button" style="display:none;margin-left:8px;background:#f59e0b;color:#000;font-weight:bold;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">🔄 Tap to Refresh</button>
+    <button id="fb-apply-btn" type="button" style="display:none;margin-left:8px;background:#f59e0b;color:#000;font-weight:bold;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">🔄 Tap to Update</button>
     <button id="fb-logout-btn" type="button" style="margin-left:8px;background:#ef4444;color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Logout</button>
   </div>
 </div>
 
 <script>
   (function() {
+    // 1. APK File Download & PDF Fix
+    document.addEventListener("click", function(e) {
+      const link = e.target.closest("a");
+      if (!link || !link.href) return;
+      if (link.target === "_blank" && (link.hasAttribute("download") || link.href.startsWith("blob:") || link.href.startsWith("data:"))) {
+        link.removeAttribute("target");
+      }
+      if (link.href.startsWith("blob:")) {
+        e.preventDefault();
+        const fileName = link.getAttribute("download") || "Aarna_Enterprises_Report.pdf";
+        fetch(link.href)
+          .then(function(res) { return res.blob(); })
+          .then(function(blob) {
+            const reader = new FileReader();
+            reader.onloadend = function() {
+              const tempLink = document.createElement("a");
+              tempLink.href = reader.result;
+              tempLink.download = fileName;
+              document.body.appendChild(tempLink);
+              tempLink.click();
+              document.body.removeChild(tempLink);
+            };
+            reader.readAsDataURL(blob);
+          })
+          .catch(function() { window.location.href = link.href; });
+      }
+    }, true);
+
+    // 2. Link-Safe Firebase Loader
     const host = ["www", "gstatic", "com"].join(".");
     const base = "https:/" + "/" + host + "/firebasejs/10.14.1/";
     const files = ["firebase-app-compat.js", "firebase-auth-compat.js", "firebase-firestore-compat.js"];
@@ -4347,21 +4376,22 @@
       const db = firebase.firestore();
 
       let isApplyingRemote = false;
-      let firstLoadDone = false;
 
-      // Sort keys alphabetically so Mobile and PC always produce the exact same hash
+      // Ignore temporary session/timer keys and sort alphabetically
       function getNormalizedHash() {
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && !k.startsWith("firebase:")) keys.push(k);
+          if (k && !k.startsWith("firebase:") && !k.toLowerCase().includes("time") && !k.toLowerCase().includes("session")) {
+            keys.push(k);
+          }
         }
         keys.sort();
         const sortedData = {};
         keys.forEach(function(k) {
           sortedData[k] = localStorage.getItem(k);
         });
-        return { data: sortedData, hash: JSON.stringify(sortedData), count: keys.length };
+        return { hash: JSON.stringify(sortedData), count: keys.length };
       }
 
       let lastSyncedHash = getNormalizedHash().hash;
@@ -4407,8 +4437,9 @@
         auth.signOut();
       };
 
+      // Manual refresh button ONLY when user taps it
       document.getElementById("fb-apply-btn").onclick = function() {
-        location.reload();
+        window.location.reload();
       };
 
       auth.onAuthStateChanged(function(user) {
@@ -4430,24 +4461,16 @@
                   });
                   isApplyingRemote = false;
 
-                  if (!firstLoadDone) {
-                    firstLoadDone = true;
-                    location.reload(); // Reload only once when first opening the app
-                  } else {
-                    // Save data silently in background without interrupting your typing!
-                    document.getElementById("fb-sync-text").textContent = "🟡 Updated";
-                    document.getElementById("fb-apply-btn").style.display = "inline-block";
-                  }
+                  // NEVER auto-reload! Just show the yellow Tap to Update button
+                  document.getElementById("fb-sync-text").textContent = "🟡 New Data";
+                  document.getElementById("fb-apply-btn").style.display = "inline-block";
                 }
-                firstLoadDone = true;
               } else {
-                firstLoadDone = true;
                 pushToCloud(user.uid);
               }
             });
 
-          // Check every 5 seconds instead of 3 to keep mobile smooth
-          setInterval(function() { pushToCloud(user.uid); }, 5000);
+          setInterval(function() { pushToCloud(user.uid); }, 6000);
         } else {
           document.getElementById("fb-auth-box").style.display = "block";
           document.getElementById("fb-status-box").style.display = "none";
@@ -4456,6 +4479,45 @@
     }
 
     loadNext(0);
+  })();
+</script>
+
+<!-- PART 2: APK File Download & PDF Fix -->
+<script>
+  (function() {
+    // 1. Intercept blob: downloads (PDFs, JSON backups, CSVs) so Android WebView APKs can download them
+    document.addEventListener("click", function(e) {
+      const link = e.target.closest("a");
+      if (!link || !link.href) return;
+
+      // Prevent new-tab blocks inside APK WebViews
+      if (link.target === "_blank" && (link.hasAttribute("download") || link.href.startsWith("blob:") || link.href.startsWith("data:"))) {
+        link.removeAttribute("target");
+      }
+
+      // Convert blob: URLs into data: URLs which Android WebView DownloadListeners support natively
+      if (link.href.startsWith("blob:")) {
+        e.preventDefault();
+        const fileName = link.getAttribute("download") || "Aarna_Enterprises_Report.pdf";
+        fetch(link.href)
+          .then(function(res) { return res.blob(); })
+          .then(function(blob) {
+            const reader = new FileReader();
+            reader.onloadend = function() {
+              const tempLink = document.createElement("a");
+              tempLink.href = reader.result;
+              tempLink.download = fileName;
+              document.body.appendChild(tempLink);
+              tempLink.click();
+              document.body.removeChild(tempLink);
+            };
+            reader.readAsDataURL(blob);
+          })
+          .catch(function() {
+            window.location.href = link.href;
+          });
+      }
+    }, true);
   })();
 </script>
 
